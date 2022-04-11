@@ -66,8 +66,8 @@ func (i *PluginInfo) Init(width int, height int) {
 	titleStyle := lipgloss.NewStyle().Foreground(special)
 
 	title := fmt.Sprintf("%s %s", titleStyle.Render(i.pluginType+" Plugin:"), i.plugin.ItemTitle)
-	desc := fmt.Sprintf("%s \n%s", titleStyle.Render("Description:"), i.plugin.pluginDescriber.Description())
-	config := fmt.Sprintf("%s \n%s", titleStyle.Render("Sample Config:"), i.plugin.pluginDescriber.SampleConfig())
+	desc := fmt.Sprintf("%s \n%s", titleStyle.Render("Description:"), i.plugin.Description)
+	config := fmt.Sprintf("%s \n%s", titleStyle.Render("Sample Config:"), i.plugin.SampleConfig)
 
 	i.content = fmt.Sprintf("%s\n\n%s\n\n%s", title, desc, config)
 

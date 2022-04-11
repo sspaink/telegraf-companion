@@ -103,8 +103,8 @@ func (s *SaveConfigPage) Update(m tea.Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			for _, t := range s.selectedPlugins {
 				for _, i := range t.Selected {
-					sampleConfig += fmt.Sprintf("#%s\n[[%s.%s]]\n", i.pluginDescriber.Description(), t.Name, i.ItemTitle)
-					sampleConfig += fmt.Sprintf("%s\n", i.pluginDescriber.SampleConfig())
+					sampleConfig += fmt.Sprintf("#%s\n[[%s.%s]]\n", i.Description, t.Name, i.ItemTitle)
+					sampleConfig += fmt.Sprintf("%s\n", i.SampleConfig)
 				}
 			}
 			_ = os.WriteFile("telegraf.conf", []byte(sampleConfig), 0644)

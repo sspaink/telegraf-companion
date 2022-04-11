@@ -5,16 +5,13 @@ import (
 	"sort"
 	"strings"
 
+	"TelegrafCompanion/plugins"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/influxdata/telegraf"
-	"github.com/influxdata/telegraf/plugins/aggregators"
-	"github.com/influxdata/telegraf/plugins/inputs"
-	"github.com/influxdata/telegraf/plugins/outputs"
-	"github.com/influxdata/telegraf/plugins/processors"
 )
 
 // Describes the styles for the plugins page
@@ -62,12 +59,12 @@ var (
 // For an example of lists: https://github.com/charmbracelet/bubbletea/blob/master/examples/list-simple/main.go
 type Item struct {
 	DisplayTitle, RenderedTitle, ItemTitle string
-	pluginDescriber                        telegraf.PluginDescriber
+	SampleConfig                           string
+	Description                            string
 	Index                                  int
 }
 
 func (i Item) Title() string       { return i.DisplayTitle }
-func (i Item) Description() string { return i.pluginDescriber.Description() }
 func (i Item) FilterValue() string { return i.DisplayTitle }
 
 type PluginPage struct {
@@ -142,42 +139,53 @@ func NewPluginPage() PluginPage {
 	var inputContent, outputContent, aggregatorContent, processorContent []Item
 	titleColor := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#EE6FF8", Dark: "#EE6FF8"})
 
+	outputPlugins := plugins.OutputPlugins()
+	for _, plugin := range outputPlugins {
+		outputContent = append(inputContent, Item{
+			DisplayTitle:  plugin.Name,
+			ItemTitle:     plugin.Name,
+			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
+			Description:   plugin.Description,
+			SampleConfig:  plugin.SampleConfig,
+		})
+	}
+
 	// Each input type has its own creator type, so have to duplicate the init code
-	for name, creator := range inputs.Inputs {
-		inputContent = append(inputContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
-		})
-	}
+	// for name, creator := range inputs.Inputs {
+	// 	inputContent = append(inputContent, Item{
+	// 		DisplayTitle:    name,
+	// 		ItemTitle:       name,
+	// 		RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
+	// 		pluginDescriber: creator(),
+	// 	})
+	// }
 
-	for name, creator := range outputs.Outputs {
-		outputContent = append(outputContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
-		})
-	}
+	// for name, creator := range outputs.Outputs {
+	// 	outputContent = append(outputContent, Item{
+	// 		DisplayTitle:    name,
+	// 		ItemTitle:       name,
+	// 		RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
+	// 		pluginDescriber: creator(),
+	// 	})
+	// }
 
-	for name, creator := range aggregators.Aggregators {
-		aggregatorContent = append(aggregatorContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
-		})
-	}
+	// for name, creator := range aggregators.Aggregators {
+	// 	aggregatorContent = append(aggregatorContent, Item{
+	// 		DisplayTitle:    name,
+	// 		ItemTitle:       name,
+	// 		RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
+	// 		pluginDescriber: creator(),
+	// 	})
+	// }
 
-	for name, creator := range processors.Processors {
-		processorContent = append(processorContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
-		})
-	}
+	// for name, creator := range processors.Processors {
+	// 	processorContent = append(processorContent, Item{
+	// 		DisplayTitle:    name,
+	// 		ItemTitle:       name,
+	// 		RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
+	// 		pluginDescriber: creator(),
+	// 	})
+	// }
 
 	var t [][]Item
 	t = append(t, processPlugin(inputContent))
