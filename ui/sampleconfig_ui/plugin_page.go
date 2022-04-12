@@ -5,16 +5,13 @@ import (
 	"sort"
 	"strings"
 
+	"TelegrafCompanion/plugins"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/influxdata/telegraf"
-	"github.com/influxdata/telegraf/plugins/aggregators"
-	"github.com/influxdata/telegraf/plugins/inputs"
-	"github.com/influxdata/telegraf/plugins/outputs"
-	"github.com/influxdata/telegraf/plugins/processors"
 )
 
 // Describes the styles for the plugins page
@@ -62,12 +59,13 @@ var (
 // For an example of lists: https://github.com/charmbracelet/bubbletea/blob/master/examples/list-simple/main.go
 type Item struct {
 	DisplayTitle, RenderedTitle, ItemTitle string
-	pluginDescriber                        telegraf.PluginDescriber
+	SampleConfig                           string
+	description                            string
 	Index                                  int
 }
 
 func (i Item) Title() string       { return i.DisplayTitle }
-func (i Item) Description() string { return i.pluginDescriber.Description() }
+func (i Item) Description() string { return i.description }
 func (i Item) FilterValue() string { return i.DisplayTitle }
 
 type PluginPage struct {
@@ -142,40 +140,44 @@ func NewPluginPage() PluginPage {
 	var inputContent, outputContent, aggregatorContent, processorContent []Item
 	titleColor := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#EE6FF8", Dark: "#EE6FF8"})
 
-	// Each input type has its own creator type, so have to duplicate the init code
-	for name, creator := range inputs.Inputs {
+	inputPlugins := plugins.InputPlugins()
+	for _, plugin := range inputPlugins {
 		inputContent = append(inputContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
+			DisplayTitle:  plugin.Name,
+			ItemTitle:     plugin.Name,
+			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
+			description:   plugin.Description,
+			SampleConfig:  plugin.SampleConfig,
 		})
 	}
-
-	for name, creator := range outputs.Outputs {
+	outputPlugins := plugins.OutputPlugins()
+	for _, plugin := range outputPlugins {
 		outputContent = append(outputContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
+			DisplayTitle:  plugin.Name,
+			ItemTitle:     plugin.Name,
+			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
+			description:   plugin.Description,
+			SampleConfig:  plugin.SampleConfig,
 		})
 	}
-
-	for name, creator := range aggregators.Aggregators {
-		aggregatorContent = append(aggregatorContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
-		})
-	}
-
-	for name, creator := range processors.Processors {
+	processorPlugins := plugins.ProcessorPlugins()
+	for _, plugin := range processorPlugins {
 		processorContent = append(processorContent, Item{
-			DisplayTitle:    name,
-			ItemTitle:       name,
-			RenderedTitle:   fmt.Sprintf("%s%s", checked, titleColor.Render(name)),
-			pluginDescriber: creator(),
+			DisplayTitle:  plugin.Name,
+			ItemTitle:     plugin.Name,
+			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
+			description:   plugin.Description,
+			SampleConfig:  plugin.SampleConfig,
+		})
+	}
+	aggregatorPlugins := plugins.AggregatorPlugins()
+	for _, plugin := range aggregatorPlugins {
+		aggregatorContent = append(aggregatorContent, Item{
+			DisplayTitle:  plugin.Name,
+			ItemTitle:     plugin.Name,
+			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
+			description:   plugin.Description,
+			SampleConfig:  plugin.SampleConfig,
 		})
 	}
 
