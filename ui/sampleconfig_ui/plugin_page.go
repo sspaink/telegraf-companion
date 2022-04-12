@@ -60,11 +60,12 @@ var (
 type Item struct {
 	DisplayTitle, RenderedTitle, ItemTitle string
 	SampleConfig                           string
-	Description                            string
+	description                            string
 	Index                                  int
 }
 
 func (i Item) Title() string       { return i.DisplayTitle }
+func (i Item) Description() string { return i.description }
 func (i Item) FilterValue() string { return i.DisplayTitle }
 
 type PluginPage struct {
@@ -145,7 +146,7 @@ func NewPluginPage() PluginPage {
 			DisplayTitle:  plugin.Name,
 			ItemTitle:     plugin.Name,
 			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
-			Description:   plugin.Description,
+			description:   plugin.Description,
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
@@ -155,7 +156,7 @@ func NewPluginPage() PluginPage {
 			DisplayTitle:  plugin.Name,
 			ItemTitle:     plugin.Name,
 			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
-			Description:   plugin.Description,
+			description:   plugin.Description,
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
@@ -165,7 +166,7 @@ func NewPluginPage() PluginPage {
 			DisplayTitle:  plugin.Name,
 			ItemTitle:     plugin.Name,
 			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
-			Description:   plugin.Description,
+			description:   plugin.Description,
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
@@ -175,7 +176,7 @@ func NewPluginPage() PluginPage {
 			DisplayTitle:  plugin.Name,
 			ItemTitle:     plugin.Name,
 			RenderedTitle: fmt.Sprintf("%s%s", checked, titleColor.Render(plugin.Name)),
-			Description:   plugin.Description,
+			description:   plugin.Description,
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
