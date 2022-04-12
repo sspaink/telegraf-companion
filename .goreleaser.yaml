@@ -12,6 +12,9 @@ builds:
       - linux
       - windows
       - darwin
+    hooks:
+      pre: go generate -v -run="main.go$" ./plugins/...
+      post: go generate -v -run="--clean" ./plugins/...
 archives:
   - replacements:
       darwin: Darwin

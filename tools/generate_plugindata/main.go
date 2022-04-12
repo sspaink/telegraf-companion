@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -14,8 +15,13 @@ import (
 	"github.com/yuin/goldmark"
 	gast "github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
+
+	. "github.com/dave/jennifer/jen"
 )
 
+const fileName = "generated_data.go"
+
+//cloneTelegraf will clone the Telegraf repo if it doesn't exist
 func cloneTelegraf(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err := os.Mkdir(path, 0755)
@@ -33,13 +39,14 @@ func cloneTelegraf(path string) error {
 	return nil
 }
 
-func parseReadme(name string, path string) (*plugins.Plugin, error) {
+//parseReadme gets the sample config and description from the README.md
+func parseReadme(pluginName string, readmePath string) (plugins.Plugin, error) {
 	var p plugins.Plugin
-	p.Name = name
+	p.Name = pluginName
 
-	readMe, err := os.ReadFile(path)
+	readMe, err := os.ReadFile(readmePath)
 	if err != nil {
-		return nil, err
+		return p, err
 	}
 	parser := goldmark.DefaultParser()
 	r := text.NewReader(readMe)
@@ -47,7 +54,6 @@ func parseReadme(name string, path string) (*plugins.Plugin, error) {
 
 	var currentSection string
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
-		// n.Dump(readMe, 0)
 		switch tok := n.(type) {
 		case *gast.Heading:
 			if tok.FirstChild() != nil {
@@ -56,7 +62,7 @@ func parseReadme(name string, path string) (*plugins.Plugin, error) {
 		case *gast.FencedCodeBlock:
 			if currentSection == "Configuration" && string(tok.Language(readMe)) == "toml" {
 				description := tok.Lines().At(0)
-				p.Description = string(description.Value(readMe))
+				p.Description = strings.TrimSpace(strings.TrimPrefix(string(description.Value(readMe)), "#"))
 				var config []byte
 				for i := 0; i < tok.Lines().Len(); i++ {
 					line := tok.Lines().At(i)
@@ -67,10 +73,12 @@ func parseReadme(name string, path string) (*plugins.Plugin, error) {
 			}
 		}
 	}
-	return &p, nil
+	return p, nil
 }
 
-func extractReadme(path string, plugins []plugins.Plugin) error {
+//extractReadme walks the path searching for the README.d of each plugin
+func extractReadme(path string) ([]plugins.Plugin, error) {
+	var plugins []plugins.Plugin
 	err := filepath.WalkDir(path, func(s string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -88,14 +96,60 @@ func extractReadme(path string, plugins []plugins.Plugin) error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(s)
-			fmt.Println(p.Description)
+			plugins = append(plugins, p)
 		}
 		return nil
 	})
 	if err != nil {
+		return nil, err
+	}
+	return plugins, nil
+}
+
+func UpdateFile(input, output, processor, aggregator []plugins.Plugin) error {
+	err := os.Rename(fileName, fileName+".tmp")
+	if err != nil {
 		return err
 	}
+	f := NewFile("plugins")
+	header := `//go:generate go run ../tools/generate_plugindata/main.go
+//go:generate go run ../tools/generate_plugindata/main.go --clean`
+	f.HeaderComment(header)
+
+	functionContents := func(plugins []plugins.Plugin) func(g *Group) {
+		return func(g *Group) {
+			for _, plugin := range plugins {
+				g.Values(Dict{
+					Id("Name"):         Lit(plugin.Name),
+					Id("Description"):  Lit(plugin.Description),
+					Id("SampleConfig"): Lit(plugin.SampleConfig),
+				})
+			}
+		}
+	}
+
+	f.Func().Id("InputPlugins").Params().Id("[]Plugin").Block(
+		Id("plugins").Op(":=").Index().Id("Plugin").ValuesFunc(functionContents(input)),
+		Return(Id("plugins")),
+	)
+	f.Func().Id("OutputPlugins").Params().Id("[]Plugin").Block(
+		Id("plugins").Op(":=").Index().Id("Plugin").ValuesFunc(functionContents(output)),
+		Return(Id("plugins")),
+	)
+	f.Func().Id("ProcessorPlugins").Params().Id("[]Plugin").Block(
+		Id("plugins").Op(":=").Index().Id("Plugin").ValuesFunc(functionContents(output)),
+		Return(Id("plugins")),
+	)
+	f.Func().Id("AggregatorPlugins").Params().Id("[]Plugin").Block(
+		Id("plugins").Op(":=").Index().Id("Plugin").ValuesFunc(functionContents(output)),
+		Return(Id("plugins")),
+	)
+
+	err = os.WriteFile(fileName, []byte(fmt.Sprintf("%#v", f)), 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -113,23 +167,48 @@ func ExtractPluginData() error {
 	// }()
 
 	// var input, output, processor, aggregator []plugins.Plugin
-	var input []plugins.Plugin
-
-	err := extractReadme(filepath.Join(path, "plugins", "inputs"), input)
+	input, err := extractReadme(filepath.Join(path, "plugins", "inputs"))
 	if err != nil {
 		return err
 	}
-	// extractReadme(filepath.Join(path, "plugins", "outputs"), output)
-	// extractReadme(filepath.Join(path, "plugins", "processors"), processor)
-	// extractReadme(filepath.Join(path, "plugins", "aggregators"), aggregator)
+	output, err := extractReadme(filepath.Join(path, "plugins", "outputs"))
+	if err != nil {
+		return err
+	}
+	processor, err := extractReadme(filepath.Join(path, "plugins", "processors"))
+	if err != nil {
+		return err
+	}
+	aggregator, err := extractReadme(filepath.Join(path, "plugins", "aggregators"))
+	if err != nil {
+		return err
+	}
+
+	err = UpdateFile(input, output, processor, aggregator)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func main() {
-	// Extract plugin info from plugin README's
-	err := ExtractPluginData()
-	if err != nil {
-		log.Panic(err)
+	clean := flag.Bool("clean", false, "Remove generated files")
+	flag.Parse()
+
+	if *clean {
+		err := os.Remove(fileName)
+		if err != nil {
+			log.Panic(err)
+		}
+		err = os.Rename(fileName+".tmp", fileName)
+		if err != nil {
+			log.Panic(err)
+		}
+	} else {
+		err := ExtractPluginData()
+		if err != nil {
+			log.Panic(err)
+		}
 	}
 }

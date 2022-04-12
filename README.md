@@ -8,4 +8,5 @@ A TUI for Telegraf to help generate a sample config
 
 ## Building
 
+`goreleaser build --single-target --snapshot --rm-dist`
 `go build cmd/main.go`

@@ -1,5 +1,5 @@
-//go:generate go run ../tools/generate_plugindata/main.go --type outputs
-//MUTEgo:generate ../tools/generate_plugin --clean
+//go:generate go run ../tools/generate_plugindata/main.go
+//go:generate go run ../tools/generate_plugindata/main.go --clean
 package plugins
 
 func InputPlugins() []Plugin {
