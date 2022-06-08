@@ -6,7 +6,10 @@ A TUI for Telegraf to help generate a sample config
 
 ![preview](assets/preview.gif "preview")
 
-## Building
+## Building and running tests
 
-`goreleaser build --single-target --snapshot --rm-dist`
-`go build cmd/main.go`
+This project uses [Magefiles](https://magefile.org/).
+
+Run all tests: `mage -v test`
+Build for local OS: `mage build`
+Build for specific OS: `mage build windows`

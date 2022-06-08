@@ -1,0 +1,47 @@
+[
+	{
+		"Name": "basicstats",
+		"Description": " Keep the aggregate basicstats of each metric passing through.",
+		"SampleConfig": "[[aggregators.basicstats]]\n  ## The period on which to flush \u0026 clear the aggregator.\n  period = \"30s\"\n\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n\n  ## Configures which basic stats to push as fields\n  # stats = [\"count\",\"diff\",\"rate\",\"min\",\"max\",\"mean\",\"non_negative_diff\",\"non_negative_rate\",\"stdev\",\"s2\",\"sum\",\"interval\"]\n"
+	},
+	{
+		"Name": "derivative",
+		"Description": " Calculates a derivative for every field.",
+		"SampleConfig": "[[aggregators.derivative]]\n  ## Specific Derivative Aggregator Arguments:\n\n  ## Configure a custom derivation variable. Timestamp is used if none is given.\n  # variable = \"\"\n\n  ## Suffix to add to the field name for the derivative name.\n  # suffix = \"_rate\"\n\n  ## Roll-Over last measurement to first measurement of next period\n  # max_roll_over = 10\n\n  ## General Aggregator Arguments:\n\n  ## calculate derivative every 30 seconds\n  period = \"30s\"\n"
+	},
+	{
+		"Name": "final",
+		"Description": " Report the final metric of a series",
+		"SampleConfig": "[[aggregators.final]]\n  ## The period on which to flush \u0026 clear the aggregator.\n  period = \"30s\"\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n\n  ## The time that a series is not updated until considering it final.\n  series_timeout = \"5m\"\n"
+	},
+	{
+		"Name": "histogram",
+		"Description": " Configuration for aggregate histogram metrics",
+		"SampleConfig": "[[aggregators.histogram]]\n  ## The period in which to flush the aggregator.\n  period = \"30s\"\n\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n\n  ## If true, the histogram will be reset on flush instead\n  ## of accumulating the results.\n  reset = false\n\n  ## Whether bucket values should be accumulated. If set to false, \"gt\" tag will be added.\n  ## Defaults to true.\n  cumulative = true\n\n  ## Expiration interval for each histogram. The histogram will be expired if\n  ## there are no changes in any buckets for this time interval. 0 == no expiration.\n  # expiration_interval = \"0m\"\n\n  ## If true, aggregated histogram are pushed to output only if it was updated since\n  ## previous push. Defaults to false.\n  # push_only_on_update = false\n\n  ## Example config that aggregates all fields of the metric.\n  # [[aggregators.histogram.config]]\n  #   ## Right borders of buckets (with +Inf implicitly added).\n  #   buckets = [0.0, 15.6, 34.5, 49.1, 71.5, 80.5, 94.5, 100.0]\n  #   ## The name of metric.\n  #   measurement_name = \"cpu\"\n\n  ## Example config that aggregates only specific fields of the metric.\n  # [[aggregators.histogram.config]]\n  #   ## Right borders of buckets (with +Inf implicitly added).\n  #   buckets = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]\n  #   ## The name of metric.\n  #   measurement_name = \"diskio\"\n  #   ## The concrete fields of metric\n  #   fields = [\"io_time\", \"read_time\", \"write_time\"]\n"
+	},
+	{
+		"Name": "merge",
+		"Description": " Merge metrics into multifield metrics by series key",
+		"SampleConfig": "[[aggregators.merge]]\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = true\n"
+	},
+	{
+		"Name": "minmax",
+		"Description": " Keep the aggregate min/max of each metric passing through.",
+		"SampleConfig": "[[aggregators.minmax]]\n  ## General Aggregator Arguments:\n  ## The period on which to flush \u0026 clear the aggregator.\n  period = \"30s\"\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n"
+	},
+	{
+		"Name": "quantile",
+		"Description": " Keep the aggregate quantiles of each metric passing through.",
+		"SampleConfig": "[[aggregators.quantile]]\n  ## General Aggregator Arguments:\n  ## The period on which to flush \u0026 clear the aggregator.\n  period = \"30s\"\n\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n\n  ## Quantiles to output in the range [0,1]\n  # quantiles = [0.25, 0.5, 0.75]\n\n  ## Type of aggregation algorithm\n  ## Supported are:\n  ##  \"t-digest\" -- approximation using centroids, can cope with large number of samples\n  ##  \"exact R7\" -- exact computation also used by Excel or NumPy (Hyndman \u0026 Fan 1996 R7)\n  ##  \"exact R8\" -- exact computation (Hyndman \u0026 Fan 1996 R8)\n  ## NOTE: Do not use \"exact\" algorithms with large number of samples\n  ##       to not impair performance or memory consumption!\n  # algorithm = \"t-digest\"\n\n  ## Compression for approximation (t-digest). The value needs to be\n  ## greater or equal to 1.0. Smaller values will result in more\n  ## performance but less accuracy.\n  # compression = 100.0\n"
+	},
+	{
+		"Name": "starlark",
+		"Description": " Aggregate metrics using a Starlark script",
+		"SampleConfig": "[[aggregators.starlark]]\n  ## The Starlark source can be set as a string in this configuration file, or\n  ## by referencing a file containing the script.  Only one source or script\n  ## should be set at once.\n  ##\n  ## Source of the Starlark script.\n  source = '''\nstate = {}\n\ndef add(metric):\n  state[\"last\"] = metric\n\ndef push():\n  return state.get(\"last\")\n\ndef reset():\n  state.clear()\n'''\n\n  ## File containing a Starlark script.\n  # script = \"/usr/local/bin/myscript.star\"\n\n  ## The constants of the Starlark script.\n  # [aggregators.starlark.constants]\n  #   max_size = 10\n  #   threshold = 0.75\n  #   default_name = \"Julia\"\n  #   debug_mode = true\n"
+	},
+	{
+		"Name": "valuecounter",
+		"Description": " Count the occurrence of values in fields.",
+		"SampleConfig": "[[aggregators.valuecounter]]\n  ## General Aggregator Arguments:\n  ## The period on which to flush \u0026 clear the aggregator.\n  period = \"30s\"\n  ## If true, the original metric will be dropped by the\n  ## aggregator and will not get sent to the output plugins.\n  drop_original = false\n  ## The fields for which the values will be counted\n  fields = [\"status\"]\n"
+	}
+]

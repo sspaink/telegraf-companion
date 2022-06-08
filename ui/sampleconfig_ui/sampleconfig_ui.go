@@ -25,15 +25,18 @@ type SampleConfigUI struct {
 	pages []Pages
 }
 
-func NewSampleConfigUI() SampleConfigUI {
+func NewSampleConfigUI() (SampleConfigUI, error) {
 	w := NewWelcomePage()
-	p := NewPluginPage()
+	p, err := NewPluginPage()
+	if err != nil {
+		return SampleConfigUI{}, err
+	}
 
 	var pages []Pages
 	pages = append(pages, &w)
 	pages = append(pages, &p)
 
-	return SampleConfigUI{pages: pages}
+	return SampleConfigUI{pages: pages}, nil
 }
 
 func (s SampleConfigUI) Init() tea.Cmd {

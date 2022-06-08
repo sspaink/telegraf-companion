@@ -17,3 +17,5 @@
 dist/
 
 telegraf/
+
+telegraf-companion

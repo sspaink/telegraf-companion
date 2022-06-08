@@ -1,0 +1,132 @@
+[
+	{
+		"Name": "ec2",
+		"Description": " Attach AWS EC2 metadata to metrics",
+		"SampleConfig": "[[processors.aws_ec2]]\n  ## Instance identity document tags to attach to metrics.\n  ## For more information see:\n  ## https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-identity-documents.html\n  ##\n  ## Available tags:\n  ## * accountId\n  ## * architecture\n  ## * availabilityZone\n  ## * billingProducts\n  ## * imageId\n  ## * instanceId\n  ## * instanceType\n  ## * kernelId\n  ## * pendingTime\n  ## * privateIp\n  ## * ramdiskId\n  ## * region\n  ## * version\n  imds_tags = []\n\n  ## EC2 instance tags retrieved with DescribeTags action.\n  ## In case tag is empty upon retrieval it's omitted when tagging metrics.\n  ## Note that in order for this to work, role attached to EC2 instance or AWS\n  ## credentials available from the environment must have a policy attached, that\n  ## allows ec2:DescribeTags.\n  ##\n  ## For more information see:\n  ## https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTags.html\n  ec2_tags = []\n\n  ## Timeout for http requests made by against aws ec2 metadata endpoint.\n  timeout = \"10s\"\n\n  ## ordered controls whether or not the metrics need to stay in the same order\n  ## this plugin received them in. If false, this plugin will change the order\n  ## with requests hitting cached results moving through immediately and not\n  ## waiting on slower lookups. This may cause issues for you if you are\n  ## depending on the order of metrics staying the same. If so, set this to true.\n  ## Keeping the metrics ordered may be slightly slower.\n  ordered = false\n\n  ## max_parallel_calls is the maximum number of AWS API calls to be in flight\n  ## at the same time.\n  ## It's probably best to keep this number fairly low.\n  max_parallel_calls = 10\n"
+	},
+	{
+		"Name": "clone",
+		"Description": " Apply metric modifications using override semantics.",
+		"SampleConfig": "[[processors.clone]]\n  ## All modifications on inputs and aggregators can be overridden:\n  # name_override = \"new_name\"\n  # name_prefix = \"new_name_prefix\"\n  # name_suffix = \"new_name_suffix\"\n\n  ## Tags to be added (all values must be strings)\n  # [processors.clone.tags]\n  #   additional_tag = \"tag_value\"\n"
+	},
+	{
+		"Name": "converter",
+		"Description": " Convert values to another metric value type",
+		"SampleConfig": "[[processors.converter]]\n  ## Tags to convert\n  ##\n  ## The table key determines the target type, and the array of key-values\n  ## select the keys to convert.  The array may contain globs.\n  ##   \u003ctarget-type\u003e = [\u003ctag-key\u003e...]\n  [processors.converter.tags]\n    measurement = []\n    string = []\n    integer = []\n    unsigned = []\n    boolean = []\n    float = []\n\n  ## Fields to convert\n  ##\n  ## The table key determines the target type, and the array of key-values\n  ## select the keys to convert.  The array may contain globs.\n  ##   \u003ctarget-type\u003e = [\u003cfield-key\u003e...]\n  [processors.converter.fields]\n    measurement = []\n    tag = []\n    string = []\n    integer = []\n    unsigned = []\n    boolean = []\n    float = []\n"
+	},
+	{
+		"Name": "date",
+		"Description": " Dates measurements, tags, and fields that pass through this filter.",
+		"SampleConfig": "[[processors.date]]\n  ## New tag to create\n  tag_key = \"month\"\n\n  ## New field to create (cannot set both field_key and tag_key)\n  # field_key = \"month\"\n\n  ## Date format string, must be a representation of the Go \"reference time\"\n  ## which is \"Mon Jan 2 15:04:05 -0700 MST 2006\".\n  date_format = \"Jan\"\n\n  ## If destination is a field, date format can also be one of\n  ## \"unix\", \"unix_ms\", \"unix_us\", or \"unix_ns\", which will insert an integer field.\n  # date_format = \"unix\"\n\n  ## Offset duration added to the date string when writing the new tag.\n  # date_offset = \"0s\"\n\n  ## Timezone to use when creating the tag or field using a reference time\n  ## string.  This can be set to one of \"UTC\", \"Local\", or to a location name\n  ## in the IANA Time Zone database.\n  ##   example: timezone = \"America/Los_Angeles\"\n  # timezone = \"UTC\"\n"
+	},
+	{
+		"Name": "dedup",
+		"Description": " Filter metrics with repeating field values",
+		"SampleConfig": "[[processors.dedup]]\n  ## Maximum time to suppress output\n  dedup_interval = \"600s\"\n"
+	},
+	{
+		"Name": "defaults",
+		"Description": "# Set default fields on your metric(s) when they are nil or empty",
+		"SampleConfig": "[[processors.defaults]]\n  ## Ensures a set of fields always exists on your metric(s) with their\n  ## respective default value.\n  ## For any given field pair (key = default), if it's not set, a field\n  ## is set on the metric with the specified default.\n  ##\n  ## A field is considered not set if it is nil on the incoming metric;\n  ## or it is not nil but its value is an empty string or is a string\n  ## of one or more spaces.\n  ##   \u003ctarget-field\u003e = \u003cvalue\u003e\n  [processors.defaults.fields]\n    field_1 = \"bar\"\n    time_idle = 0\n    is_error = true\n"
+	},
+	{
+		"Name": "enum",
+		"Description": " Map enum values according to given table.",
+		"SampleConfig": "[[processors.enum]]\n  [[processors.enum.mapping]]\n    ## Name of the field to map. Globs accepted.\n    field = \"status\"\n\n    ## Name of the tag to map. Globs accepted.\n    # tag = \"status\"\n\n    ## Destination tag or field to be used for the mapped value.  By default the\n    ## source tag or field is used, overwriting the original value.\n    dest = \"status_code\"\n\n    ## Default value to be used for all values not contained in the mapping\n    ## table.  When unset and no match is found, the original field will remain\n    ## unmodified and the destination tag or field will not be created.\n    # default = 0\n\n    ## Table of mappings\n    [processors.enum.mapping.value_mappings]\n      green = 1\n      amber = 2\n      red = 3\n"
+	},
+	{
+		"Name": "execd",
+		"Description": " Run executable as long-running processor plugin",
+		"SampleConfig": "[[processors.execd]]\n  ## One program to run as daemon.\n  ## NOTE: process and each argument should each be their own string\n  ## eg: command = [\"/path/to/your_program\", \"arg1\", \"arg2\"]\n  command = [\"cat\"]\n\n  ## Environment variables\n  ## Array of \"key=value\" pairs to pass as environment variables\n  ## e.g. \"KEY=value\", \"USERNAME=John Doe\",\n  ## \"LD_LIBRARY_PATH=/opt/custom/lib64:/usr/local/libs\"\n  # environment = []\n\n  ## Delay before the process is restarted after an unexpected termination\n  # restart_delay = \"10s\"\n"
+	},
+	{
+		"Name": "filepath",
+		"Description": " Performs file path manipulations on tags and fields",
+		"SampleConfig": "[[processors.filepath]]\n  ## Treat the tag value as a path and convert it to its last element, storing the result in a new tag\n  # [[processors.filepath.basename]]\n  #   tag = \"path\"\n  #   dest = \"basepath\"\n\n  ## Treat the field value as a path and keep all but the last element of path, typically the path's directory\n  # [[processors.filepath.dirname]]\n  #   field = \"path\"\n\n  ## Treat the tag value as a path, converting it to its the last element without its suffix\n  # [[processors.filepath.stem]]\n  #   tag = \"path\"\n\n  ## Treat the tag value as a path, converting it to the shortest path name equivalent\n  ## to path by purely lexical processing\n  # [[processors.filepath.clean]]\n  #   tag = \"path\"\n\n  ## Treat the tag value as a path, converting it to a relative path that is lexically\n  ## equivalent to the source path when joined to 'base_path'\n  # [[processors.filepath.rel]]\n  #   tag = \"path\"\n  #   base_path = \"/var/log\"\n\n  ## Treat the tag value as a path, replacing each separator character in path with a '/' character. Has only\n  ## effect on Windows\n  # [[processors.filepath.toslash]]\n  #   tag = \"path\"\n"
+	},
+	{
+		"Name": "ifname",
+		"Description": " Add a tag of the network interface name looked up over SNMP by interface number",
+		"SampleConfig": "[[processors.ifname]]\n  ## Name of tag holding the interface number\n  # tag = \"ifIndex\"\n\n  ## Name of output tag where service name will be added\n  # dest = \"ifName\"\n\n  ## Name of tag of the SNMP agent to request the interface name from\n  # agent = \"agent\"\n\n  ## Timeout for each request.\n  # timeout = \"5s\"\n\n  ## SNMP version; can be 1, 2, or 3.\n  # version = 2\n\n  ## SNMP community string.\n  # community = \"public\"\n\n  ## Number of retries to attempt.\n  # retries = 3\n\n  ## The GETBULK max-repetitions parameter.\n  # max_repetitions = 10\n\n  ## SNMPv3 authentication and encryption options.\n  ##\n  ## Security Name.\n  # sec_name = \"myuser\"\n  ## Authentication protocol; one of \"MD5\", \"SHA\", or \"\".\n  # auth_protocol = \"MD5\"\n  ## Authentication password.\n  # auth_password = \"pass\"\n  ## Security Level; one of \"noAuthNoPriv\", \"authNoPriv\", or \"authPriv\".\n  # sec_level = \"authNoPriv\"\n  ## Context Name.\n  # context_name = \"\"\n  ## Privacy protocol used for encrypted messages; one of \"DES\", \"AES\" or \"\".\n  # priv_protocol = \"\"\n  ## Privacy password used for encrypted messages.\n  # priv_password = \"\"\n\n  ## max_parallel_lookups is the maximum number of SNMP requests to\n  ## make at the same time.\n  # max_parallel_lookups = 100\n\n  ## ordered controls whether or not the metrics need to stay in the\n  ## same order this plugin received them in. If false, this plugin\n  ## may change the order when data is cached.  If you need metrics to\n  ## stay in order set this to true.  keeping the metrics ordered may\n  ## be slightly slower\n  # ordered = false\n\n  ## cache_ttl is the amount of time interface names are cached for a\n  ## given agent.  After this period elapses if names are needed they\n  ## will be retrieved again.\n  # cache_ttl = \"8h\"\n"
+	},
+	{
+		"Name": "noise",
+		"Description": " Adds noise to numerical fields",
+		"SampleConfig": "[[processors.noise]]\n  ## Specified the type of the random distribution.\n  ## Can be \"laplacian\", \"gaussian\" or \"uniform\".\n  # type = \"laplacian\n\n  ## Center of the distribution.\n  ## Only used for Laplacian and Gaussian distributions.\n  # mu = 0.0\n\n  ## Scale parameter for the Laplacian or Gaussian distribution\n  # scale = 1.0\n\n  ## Upper and lower bound of the Uniform distribution\n  # min = -1.0\n  # max = 1.0\n\n  ## Apply the noise only to numeric fields matching the filter criteria below.\n  ## Excludes takes precedence over includes.\n  # include_fields = []\n  # exclude_fields = []\n"
+	},
+	{
+		"Name": "override",
+		"Description": " Apply metric modifications using override semantics.",
+		"SampleConfig": "[[processors.override]]\n  ## All modifications on inputs and aggregators can be overridden:\n  # name_override = \"new_name\"\n  # name_prefix = \"new_name_prefix\"\n  # name_suffix = \"new_name_suffix\"\n\n  ## Tags to be added (all values must be strings)\n  # [processors.override.tags]\n  #   additional_tag = \"tag_value\"\n"
+	},
+	{
+		"Name": "parser",
+		"Description": " Parse a value in a specified field/tag(s) and add the result in a new metric",
+		"SampleConfig": "[[processors.parser]]\n  ## The name of the fields whose value will be parsed.\n  parse_fields = [\"message\"]\n\n  ## If true, incoming metrics are not emitted.\n  drop_original = false\n\n  ## If set to override, emitted metrics will be merged by overriding the\n  ## original metric using the newly parsed metrics.\n  merge = \"override\"\n\n  ## The dataformat to be read from files\n  ## Each data format has its own unique set of configuration options, read\n  ## more about them here:\n  ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md\n  data_format = \"influx\"\n"
+	},
+	{
+		"Name": "pivot",
+		"Description": " Rotate a single valued metric into a multi field metric",
+		"SampleConfig": "[[processors.pivot]]\n  ## Tag to use for naming the new field.\n  tag_key = \"name\"\n  ## Field to use as the value of the new field.\n  value_key = \"value\"\n"
+	},
+	{
+		"Name": "port_name",
+		"Description": " Given a tag/field of a TCP or UDP port number, add a tag/field of the service name looked up in the system services file",
+		"SampleConfig": "[[processors.port_name]]\n  ## Name of tag holding the port number\n  # tag = \"port\"\n  ## Or name of the field holding the port number\n  # field = \"port\"\n\n  ## Name of output tag or field (depending on the source) where service name will be added\n  # dest = \"service\"\n\n  ## Default tcp or udp\n  # default_protocol = \"tcp\"\n\n  ## Tag containing the protocol (tcp or udp, case-insensitive)\n  # protocol_tag = \"proto\"\n\n  ## Field containing the protocol (tcp or udp, case-insensitive)\n  # protocol_field = \"proto\"\n"
+	},
+	{
+		"Name": "printer",
+		"Description": " Print all metrics that pass through this filter.",
+		"SampleConfig": "[[processors.printer]]\n"
+	},
+	{
+		"Name": "regex",
+		"Description": " Transforms tag and field values as well as measurement, tag and field names with regex pattern",
+		"SampleConfig": "[[processors.regex]]\n  namepass = [\"nginx_requests\"]\n\n  # Tag and field conversions defined in a separate sub-tables\n  [[processors.regex.tags]]\n    ## Tag to change, \"*\" will change every tag\n    key = \"resp_code\"\n    ## Regular expression to match on a tag value\n    pattern = \"^(\\\\d)\\\\d\\\\d$\"\n    ## Matches of the pattern will be replaced with this string.  Use ${1}\n    ## notation to use the text of the first submatch.\n    replacement = \"${1}xx\"\n\n  [[processors.regex.fields]]\n    ## Field to change\n    key = \"request\"\n    ## All the power of the Go regular expressions available here\n    ## For example, named subgroups\n    pattern = \"^/api(?P\u003cmethod\u003e/[\\\\w/]+)\\\\S*\"\n    replacement = \"${method}\"\n    ## If result_key is present, a new field will be created\n    ## instead of changing existing field\n    result_key = \"method\"\n\n  # Multiple conversions may be applied for one field sequentially\n  # Let's extract one more value\n  [[processors.regex.fields]]\n    key = \"request\"\n    pattern = \".*category=(\\\\w+).*\"\n    replacement = \"${1}\"\n    result_key = \"search_category\"\n\n  # Rename metric fields\n  [[processors.regex.field_rename]]\n    ## Regular expression to match on a field name\n    pattern = \"^search_(\\\\w+)d$\"\n    ## Matches of the pattern will be replaced with this string.  Use ${1}\n    ## notation to use the text of the first submatch.\n    replacement = \"${1}\"\n    ## If the new field name already exists, you can either \"overwrite\" the\n    ## existing one with the value of the renamed field OR you can \"keep\"\n    ## both the existing and source field.\n    # result_key = \"keep\"\n\n  # Rename metric tags\n  # [[processors.regex.tag_rename]]\n  #   ## Regular expression to match on a tag name\n  #   pattern = \"^search_(\\\\w+)d$\"\n  #   ## Matches of the pattern will be replaced with this string.  Use ${1}\n  #   ## notation to use the text of the first submatch.\n  #   replacement = \"${1}\"\n  #   ## If the new tag name already exists, you can either \"overwrite\" the\n  #   ## existing one with the value of the renamed tag OR you can \"keep\"\n  #   ## both the existing and source tag.\n  #   # result_key = \"keep\"\n\n  # Rename metrics\n  # [[processors.regex.metric_rename]]\n  #   ## Regular expression to match on an metric name\n  #   pattern = \"^search_(\\\\w+)d$\"\n  #   ## Matches of the pattern will be replaced with this string.  Use ${1}\n  #   ## notation to use the text of the first submatch.\n  #   replacement = \"${1}\"\n"
+	},
+	{
+		"Name": "rename",
+		"Description": " Rename measurements, tags, and fields that pass through this filter.",
+		"SampleConfig": "[[processors.rename]]\n  ## Specify one sub-table per rename operation.\n  [[processors.rename.replace]]\n    measurement = \"network_interface_throughput\"\n    dest = \"throughput\"\n\n  [[processors.rename.replace]]\n    tag = \"hostname\"\n    dest = \"host\"\n\n  [[processors.rename.replace]]\n    field = \"lower\"\n    dest = \"min\"\n\n  [[processors.rename.replace]]\n    field = \"upper\"\n    dest = \"max\"\n"
+	},
+	{
+		"Name": "reverse_dns",
+		"Description": " ReverseDNS does a reverse lookup on IP addresses to retrieve the DNS name",
+		"SampleConfig": "[[processors.reverse_dns]]\n  ## For optimal performance, you may want to limit which metrics are passed to this\n  ## processor. eg:\n  ## namepass = [\"my_metric_*\"]\n\n  ## cache_ttl is how long the dns entries should stay cached for.\n  ## generally longer is better, but if you expect a large number of diverse lookups\n  ## you'll want to consider memory use.\n  cache_ttl = \"24h\"\n\n  ## lookup_timeout is how long should you wait for a single dns request to repsond.\n  ## this is also the maximum acceptable latency for a metric travelling through\n  ## the reverse_dns processor. After lookup_timeout is exceeded, a metric will\n  ## be passed on unaltered.\n  ## multiple simultaneous resolution requests for the same IP will only make a\n  ## single rDNS request, and they will all wait for the answer for this long.\n  lookup_timeout = \"3s\"\n\n  ## max_parallel_lookups is the maximum number of dns requests to be in flight\n  ## at the same time. Requesting hitting cached values do not count against this\n  ## total, and neither do mulptiple requests for the same IP.\n  ## It's probably best to keep this number fairly low.\n  max_parallel_lookups = 10\n\n  ## ordered controls whether or not the metrics need to stay in the same order\n  ## this plugin received them in. If false, this plugin will change the order\n  ## with requests hitting cached results moving through immediately and not\n  ## waiting on slower lookups. This may cause issues for you if you are\n  ## depending on the order of metrics staying the same. If so, set this to true.\n  ## keeping the metrics ordered may be slightly slower.\n  ordered = false\n\n  [[processors.reverse_dns.lookup]]\n    ## get the ip from the field \"source_ip\", and put the result in the field \"source_name\"\n    field = \"source_ip\"\n    dest = \"source_name\"\n\n  [[processors.reverse_dns.lookup]]\n    ## get the ip from the tag \"destination_ip\", and put the result in the tag\n    ## \"destination_name\".\n    tag = \"destination_ip\"\n    dest = \"destination_name\"\n\n    ## If you would prefer destination_name to be a field instead, you can use a\n    ## processors.converter after this one, specifying the order attribute.\n"
+	},
+	{
+		"Name": "s2geo",
+		"Description": " Add the S2 Cell ID as a tag based on latitude and longitude fields",
+		"SampleConfig": "[[processors.s2geo]]\n  ## The name of the lat and lon fields containing WGS-84 latitude and\n  ## longitude in decimal degrees.\n  # lat_field = \"lat\"\n  # lon_field = \"lon\"\n\n  ## New tag to create\n  # tag_key = \"s2_cell_id\"\n\n  ## Cell level (see https://s2geometry.io/resources/s2cell_statistics.html)\n  # cell_level = 9\n"
+	},
+	{
+		"Name": "starlark",
+		"Description": " Process metrics using a Starlark script",
+		"SampleConfig": "[[processors.starlark]]\n  ## The Starlark source can be set as a string in this configuration file, or\n  ## by referencing a file containing the script.  Only one source or script\n  ## should be set at once.\n\n  ## Source of the Starlark script.\n  source = '''\ndef apply(metric):\n  return metric\n'''\n\n  ## File containing a Starlark script.\n  # script = \"/usr/local/bin/myscript.star\"\n\n  ## The constants of the Starlark script.\n  # [processors.starlark.constants]\n  #   max_size = 10\n  #   threshold = 0.75\n  #   default_name = \"Julia\"\n  #   debug_mode = true\n"
+	},
+	{
+		"Name": "strings",
+		"Description": " Perform string processing on tags, fields, and measurements",
+		"SampleConfig": "[[processors.strings]]\n  ## Convert a field value to lowercase and store in a new field\n  # [[processors.strings.lowercase]]\n  #   field = \"uri_stem\"\n  #   dest = \"uri_stem_normalised\"\n\n  ## Convert a tag value to uppercase\n  # [[processors.strings.uppercase]]\n  #   tag = \"method\"\n\n  ## Convert a field value to titlecase\n  # [[processors.strings.titlecase]]\n  #   field = \"status\"\n\n  ## Trim leading and trailing whitespace using the default cutset\n  # [[processors.strings.trim]]\n  #   field = \"message\"\n\n  ## Trim leading characters in cutset\n  # [[processors.strings.trim_left]]\n  #   field = \"message\"\n  #   cutset = \"\\t\"\n\n  ## Trim trailing characters in cutset\n  # [[processors.strings.trim_right]]\n  #   field = \"message\"\n  #   cutset = \"\\r\\n\"\n\n  ## Trim the given prefix from the field\n  # [[processors.strings.trim_prefix]]\n  #   field = \"my_value\"\n  #   prefix = \"my_\"\n\n  ## Trim the given suffix from the field\n  # [[processors.strings.trim_suffix]]\n  #   field = \"read_count\"\n  #   suffix = \"_count\"\n\n  ## Replace all non-overlapping instances of old with new\n  # [[processors.strings.replace]]\n  #   measurement = \"*\"\n  #   old = \":\"\n  #   new = \"_\"\n\n  ## Trims strings based on width\n  # [[processors.strings.left]]\n  #   field = \"message\"\n  #   width = 10\n\n  ## Decode a base64 encoded utf-8 string\n  # [[processors.strings.base64decode]]\n  #   field = \"message\"\n\n  ## Sanitize a string to ensure it is a valid utf-8 string\n  ## Each run of invalid UTF-8 byte sequences is replaced by the replacement string, which may be empty\n  # [[processors.strings.valid_utf8]]\n  #   field = \"message\"\n  #   replacement = \"\"\n"
+	},
+	{
+		"Name": "tag_limit",
+		"Description": " Restricts the number of tags that can pass through this filter and chooses which tags to preserve when over the limit.",
+		"SampleConfig": "[[processors.tag_limit]]\n  ## Maximum number of tags to preserve\n  limit = 3\n\n  ## List of tags to preferentially preserve\n  keep = [\"environment\", \"region\"]\n"
+	},
+	{
+		"Name": "template",
+		"Description": " Uses a Go template to create a new tag",
+		"SampleConfig": "[[processors.template]]\n  ## Tag to set with the output of the template.\n  tag = \"topic\"\n\n  ## Go template used to create the tag value.  In order to ease TOML\n  ## escaping requirements, you may wish to use single quotes around the\n  ## template string.\n  template = '{{ .Tag \"hostname\" }}.{{ .Tag \"level\" }}'\n"
+	},
+	{
+		"Name": "topk",
+		"Description": " Print all metrics that pass through this filter.",
+		"SampleConfig": "[[processors.topk]]\n  ## How many seconds between aggregations\n  # period = 10\n\n  ## How many top buckets to return per field\n  ## Every field specified to aggregate over will return k number of results.\n  ## For example, 1 field with k of 10 will return 10 buckets. While 2 fields\n  ## with k of 3 will return 6 buckets.\n  # k = 10\n\n  ## Over which tags should the aggregation be done. Globs can be specified, in\n  ## which case any tag matching the glob will aggregated over. If set to an\n  ## empty list is no aggregation over tags is done\n  # group_by = ['*']\n\n  ## The field(s) to aggregate\n  ## Each field defined is used to create an independent aggregation. Each\n  ## aggregation will return k buckets. If a metric does not have a defined\n  ## field the metric will be dropped from the aggregation. Considering using\n  ## the defaults processor plugin to ensure fields are set if required.\n  # fields = [\"value\"]\n\n  ## What aggregation function to use. Options: sum, mean, min, max\n  # aggregation = \"mean\"\n\n  ## Instead of the top k largest metrics, return the bottom k lowest metrics\n  # bottomk = false\n\n  ## The plugin assigns each metric a GroupBy tag generated from its name and\n  ## tags. If this setting is different than \"\" the plugin will add a\n  ## tag (which name will be the value of this setting) to each metric with\n  ## the value of the calculated GroupBy tag. Useful for debugging\n  # add_groupby_tag = \"\"\n\n  ## These settings provide a way to know the position of each metric in\n  ## the top k. The 'add_rank_field' setting allows to specify for which\n  ## fields the position is required. If the list is non empty, then a field\n  ## will be added to each and every metric for each string present in this\n  ## setting. This field will contain the ranking of the group that\n  ## the metric belonged to when aggregated over that field.\n  ## The name of the field will be set to the name of the aggregation field,\n  ## suffixed with the string '_topk_rank'\n  # add_rank_fields = []\n\n  ## These settings provide a way to know what values the plugin is generating\n  ## when aggregating metrics. The 'add_aggregate_field' setting allows to\n  ## specify for which fields the final aggregation value is required. If the\n  ## list is non empty, then a field will be added to each every metric for\n  ## each field present in this setting. This field will contain\n  ## the computed aggregation for the group that the metric belonged to when\n  ## aggregated over that field.\n  ## The name of the field will be set to the name of the aggregation field,\n  ## suffixed with the string '_topk_aggregate'\n  # add_aggregate_fields = []\n"
+	},
+	{
+		"Name": "unpivot",
+		"Description": " Rotate multi field metric into several single field metrics",
+		"SampleConfig": "[[processors.unpivot]]\n  ## Tag to use for the name.\n  tag_key = \"name\"\n  ## Field to use for the name of the value.\n  value_key = \"value\"\n"
+	}
+]

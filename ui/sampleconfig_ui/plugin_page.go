@@ -136,11 +136,14 @@ type PluginTab struct {
 	Selected map[string]Item
 }
 
-func NewPluginPage() PluginPage {
+func NewPluginPage() (PluginPage, error) {
 	var inputContent, outputContent, aggregatorContent, processorContent []Item
 	titleColor := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#EE6FF8", Dark: "#EE6FF8"})
 
-	inputPlugins := plugins.InputPlugins()
+	inputPlugins, err := plugins.InputPlugins()
+	if err != nil {
+		return PluginPage{}, err
+	}
 	for _, plugin := range inputPlugins {
 		inputContent = append(inputContent, Item{
 			DisplayTitle:  plugin.Name,
@@ -150,7 +153,10 @@ func NewPluginPage() PluginPage {
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
-	outputPlugins := plugins.OutputPlugins()
+	outputPlugins, err := plugins.OutputPlugins()
+	if err != nil {
+		return PluginPage{}, err
+	}
 	for _, plugin := range outputPlugins {
 		outputContent = append(outputContent, Item{
 			DisplayTitle:  plugin.Name,
@@ -160,7 +166,10 @@ func NewPluginPage() PluginPage {
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
-	processorPlugins := plugins.ProcessorPlugins()
+	processorPlugins, err := plugins.ProcessorPlugins()
+	if err != nil {
+		return PluginPage{}, err
+	}
 	for _, plugin := range processorPlugins {
 		processorContent = append(processorContent, Item{
 			DisplayTitle:  plugin.Name,
@@ -170,7 +179,10 @@ func NewPluginPage() PluginPage {
 			SampleConfig:  plugin.SampleConfig,
 		})
 	}
-	aggregatorPlugins := plugins.AggregatorPlugins()
+	aggregatorPlugins, err := plugins.AggregatorPlugins()
+	if err != nil {
+		return PluginPage{}, err
+	}
 	for _, plugin := range aggregatorPlugins {
 		aggregatorContent = append(aggregatorContent, Item{
 			DisplayTitle:  plugin.Name,
@@ -212,7 +224,7 @@ func NewPluginPage() PluginPage {
 		TabContent:  make([]list.Model, 4),
 		keys:        newPluginKeyMap(),
 		help:        help.NewModel(),
-	}
+	}, nil
 }
 
 func (p *PluginPage) Init(width int, height int) {

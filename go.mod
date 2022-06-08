@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/dave/jennifer v1.5.0
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/magefile/mage v1.13.0
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/muesli/reflow v0.3.0
 	github.com/yuin/goldmark v1.4.1

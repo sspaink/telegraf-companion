@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	h := sampleconfig_ui.NewSampleConfigUI()
+	h, err := sampleconfig_ui.NewSampleConfigUI()
+	if err != nil {
+		log.Fatalf("E! %s", err)
+	}
 	if err := tea.NewProgram(h).Start(); err != nil {
 		log.Fatalf("E! %s", err)
 	}
